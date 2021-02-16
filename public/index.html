@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>A FeathersJS application</title>
+    <meta name="description" content="A FeathersJS server">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        font-family: 'Helvetica Neue', 'Helvetica', 'Arial', 'sans-serif';
+        font-weight: 400;
+        font-size: 16px;
+        color: #2c3e50;
+      }
+
+      .center-text {
+        text-align: center;
+      }
+
+      main {
+        margin-top: 100px;
+        padding: 20px;
+      }
+
+      img.logo {
+        display: block;
+        margin: 0 auto;
+        max-width: 100%;
+        margin-bottom: 30px;
+      }
+
+      h2 {
+        font-size: 2em;
+        font-weight: 100;
+      }
+
+      footer {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 20px;
+      }
+
+      footer p {
+        font-weight: 300;
+        font-size: 1.0em;
+      }
+
+      a {
+        color: #3cf;
+        text-decoration: none;
+      }
+
+      a:hover,
+      a:focus {
+        color: #3cf;
+      }
+    </style>
+    <link rel="stylesheet" href="//unpkg.com/feathers-chat@4.0.0/public/base.css">
+    <link rel="stylesheet" href="//unpkg.com/feathers-chat@4.0.0/public/chat.css">
+  </head>
+  <body>
+    <main class="container" id="main"> 
+      <form class="form" onsubmit="createContact(event.preventDefault())">
+        <input type="text" id="contact-name" placeholder="Enter contact name here">
+        <input type="text" id="contact-email" placeholder="Enter contact email here">
+        <button type="submit" class="button button-primary">Create Contact</button>
+      </form>
+
+      <h2>Here are the current contacts:</h2>
+
+      <footer>
+        <p class="center-text">For more information on Feathers see <a href="https://docs.feathersjs.com" title="Feathers Documentation" target="blank">docs.feathersjs.com</a>.</p>
+      </footer>
+    </main>
+
+  <script src="//unpkg.com/@feathersjs/client@^4.3.0/dist/feathers.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/socket.io/2.0.4/socket.io.js"></script>
+  <script type="text/javascript">
+    // Set up socket.io
+    const socket = io('http://localhost:3030');
+    // Initialize a Feathers app
+    const app = feathers();
+    
+    // Register socket.io to talk to our server
+    app.configure(feathers.socketio(socket));
+
+    // Form submission handler that sends a new message
+    async function createContact () {
+      const contactName = document.getElementById('contact-name');
+      const contactEmail = document.getElementById('contact-email');
+      // Create a new message with the input field value
+      await app.service('contacts').create({
+        email: contactEmail.value,
+        name: contactName.value
+      });
+
+      contactEmail.value = '';
+      contactName.value = '';
+    }
+
+    // Renders a single message on the page
+    function addContact (contact) {
+      document.getElementById('main').innerHTML += `<p>${contact.name} - ${contact.email}</p>`;
+    }
+    
+    const main = async () => {
+      // Find all existing messages
+      const contacts = await app.service('contacts').find();
+
+      console.log("####",contacts);
+
+      // Add existing messages to the list
+      // contacts.forEach(contact => {
+      //   console.log(contact);
+      //   addContact(contact);
+      // });
+
+      // Add any newly created message to the list in real-time
+      app.service('contacts').on('created', addContact);
+    };
+
+    main();
+  </script>
+  </body>
+</html>
